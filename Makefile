@@ -1,29 +1,40 @@
-PLUGIN_ID := codex-invite
-DIST_DIR := dist
+PLUGIN_NAME ?= codex-invite
+VERSION ?= 0.1.2
+BUILD_DIR ?= dist
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+GO_LDFLAGS ?= -s -w -X main.pluginVersion=$(VERSION)
 
-UNAME_S := $(shell uname -s)
+EXT_linux = so
+EXT_freebsd = so
+EXT_darwin = dylib
+EXT_windows = dll
+PLUGIN_EXT = $(or $(EXT_$(GOOS)),so)
+PLUGIN_OUTPUT ?= $(BUILD_DIR)/$(PLUGIN_NAME).$(PLUGIN_EXT)
+PLUGIN_HEADER = $(basename $(PLUGIN_OUTPUT)).h
+ARCHIVE_NAME ?= $(PLUGIN_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).zip
+ARCHIVE_PATH ?= $(BUILD_DIR)/$(ARCHIVE_NAME)
+CHECKSUM_PATH ?= $(ARCHIVE_PATH).sha256
+CHECKSUMS_PATH ?= $(BUILD_DIR)/checksums.txt
 
-ifeq ($(OS),Windows_NT)
-PLUGIN_EXT := dll
-else ifeq ($(UNAME_S),Darwin)
-PLUGIN_EXT := dylib
-else
-PLUGIN_EXT := so
-endif
-
-.PHONY: build test clean package
+.PHONY: build test vet clean package checksums
 
 build:
-	mkdir -p $(DIST_DIR)
-	go build -buildmode=c-shared -o $(DIST_DIR)/$(PLUGIN_ID).$(PLUGIN_EXT) .
-	rm -f $(DIST_DIR)/$(PLUGIN_ID).h
+	mkdir -p $(dir $(PLUGIN_OUTPUT))
+	CGO_ENABLED=1 GOOS=$(GOOS) GOARCH=$(GOARCH) go build -trimpath -buildmode=c-shared -ldflags "$(GO_LDFLAGS)" -o $(PLUGIN_OUTPUT) .
+	rm -f $(PLUGIN_HEADER)
 
 test:
 	go test ./...
 
-clean:
-	rm -rf $(DIST_DIR)
+vet:
+	go vet ./...
 
 package: build
-	cd $(DIST_DIR) && zip -q $(PLUGIN_ID)_0.1.2_$$(go env GOOS)_$$(go env GOARCH).zip $(PLUGIN_ID).$(PLUGIN_EXT)
-	cd $(DIST_DIR) && shasum -a 256 $(PLUGIN_ID)_0.1.2_$$(go env GOOS)_$$(go env GOARCH).zip > checksums.txt
+	go run ./.github/scripts/package-release.go -library "$(PLUGIN_OUTPUT)" -archive "$(ARCHIVE_PATH)" -checksum "$(CHECKSUM_PATH)"
+
+checksums: package
+	cat $(BUILD_DIR)/*.zip.sha256 | sort -k 2 > "$(CHECKSUMS_PATH)"
+
+clean:
+	rm -rf $(BUILD_DIR)

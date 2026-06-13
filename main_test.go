@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginabi"
 )
@@ -51,6 +55,84 @@ func TestInviteEndpoint(t *testing.T) {
 	want := "https://chatgpt.com/backend-api/wham/referrals/invite"
 	if got != want {
 		t.Fatalf("endpoint = %q, want %q", got, want)
+	}
+}
+
+func TestInviteHTTPClientRejectsInvalidProxyURL(t *testing.T) {
+	for _, proxyURL := range []string{"ftp://127.0.0.1:7890", "http://"} {
+		if _, err := inviteHTTPClient(proxyURL); err == nil {
+			t.Fatalf("inviteHTTPClient(%q) error = nil, want error", proxyURL)
+		}
+	}
+}
+
+func TestSendInviteUsesConfiguredProxy(t *testing.T) {
+	type seenRequest struct {
+		Method        string
+		URL           string
+		Authorization string
+		ContentType   string
+		Body          string
+	}
+	seen := make(chan seenRequest, 1)
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawBody, _ := io.ReadAll(r.Body)
+		seen <- seenRequest{
+			Method:        r.Method,
+			URL:           r.URL.String(),
+			Authorization: r.Header.Get("Authorization"),
+			ContentType:   r.Header.Get("Content-Type"),
+			Body:          string(rawBody),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("x-oai-request-id", "req-proxy-1")
+		_, _ = w.Write([]byte(`{"invites":[{"email":"user@example.com","invite_url":"https://chatgpt.com/invite/abc"}]}`))
+	}))
+	defer proxy.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	result, err := sendInvite(ctx,
+		pluginConfig{
+			BaseURL:    "http://chatgpt.example",
+			ProxyURL:   proxy.URL,
+			Language:   "zh-CN",
+			Originator: "Codex Desktop",
+			UserAgent:  "test-agent",
+		},
+		codexCredential{AccessToken: "access-1", AccountID: "account-1"},
+		accountInfo{Email: "account@example.com"},
+		[]string{"user@example.com"},
+		"ref-key",
+		"",
+	)
+	if err != nil {
+		t.Fatalf("sendInvite() error = %v", err)
+	}
+	if !result.OK || result.RequestID != "req-proxy-1" || len(result.Invites) != 1 {
+		t.Fatalf("result = %#v", result)
+	}
+
+	select {
+	case req := <-seen:
+		if req.Method != http.MethodPost {
+			t.Fatalf("proxied method = %q, want POST", req.Method)
+		}
+		wantURL := "http://chatgpt.example/backend-api/wham/referrals/invite"
+		if req.URL != wantURL {
+			t.Fatalf("proxied URL = %q, want %q", req.URL, wantURL)
+		}
+		if req.Authorization != "Bearer access-1" {
+			t.Fatalf("authorization = %q", req.Authorization)
+		}
+		if req.ContentType != "application/json" {
+			t.Fatalf("content type = %q", req.ContentType)
+		}
+		if !strings.Contains(req.Body, `"referral_key":"ref-key"`) || !strings.Contains(req.Body, `"emails":["user@example.com"]`) {
+			t.Fatalf("body = %q", req.Body)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("proxy did not receive invite request")
 	}
 }
 
@@ -111,6 +193,8 @@ func TestRenderInvitePageCollapsesSettingsAndIncludesI18n(t *testing.T) {
 		`data-i18n="settings.title"`,
 		`'settings.title': 'Settings'`,
 		`'settings.title': '设置'`,
+		`'settings.proxyUrl': 'Proxy URL'`,
+		`'settings.proxyUrl': '代理地址'`,
 		`'invite.send': 'Send invites'`,
 		`'invite.send': '发送邀请'`,
 	} {

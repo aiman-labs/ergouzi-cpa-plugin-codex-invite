@@ -38,7 +38,7 @@ It provides:
 
 - CPA management key entry for authenticated Management API calls.
 - Codex credential loading and account selection from CPA auth files.
-- Invite settings for referral key, ChatGPT base URL, language, originator, user agent, request email limit, and optional Cookie.
+- Invite settings for referral key, ChatGPT base URL, proxy URL, language, originator, user agent, request email limit, and optional Cookie.
 - Local browser settings for non-secret fields.
 - Invite execution through `POST /v0/management/codex-invite/invite`.
 
@@ -51,12 +51,15 @@ plugin configuration form.
 ```bash
 make test
 make build
+make package
 ```
 
 On macOS this creates:
 
 ```text
 dist/codex-invite.dylib
+dist/codex-invite_0.1.2_darwin_arm64.zip
+dist/codex-invite_0.1.2_darwin_arm64.zip.sha256
 ```
 
 Install locally by copying the dynamic library to CPA's plugin discovery
@@ -65,6 +68,13 @@ directory, for example:
 ```bash
 mkdir -p /path/to/CLIProxyAPI/plugins/darwin/arm64
 cp dist/codex-invite.dylib /path/to/CLIProxyAPI/plugins/darwin/arm64/codex-invite.dylib
+```
+
+Target platform, output directory, and runtime plugin version can be overridden:
+
+```bash
+make build GOOS=darwin GOARCH=arm64 BUILD_DIR=/path/to/plugins/darwin/arm64
+make package VERSION=0.1.2
 ```
 
 ## Plugin Store Release
@@ -83,6 +93,12 @@ Each zip must contain the dynamic library at the zip root:
 - Windows: `codex-invite.dll`
 
 `checksums.txt` must be in sha256sum format.
+
+Generate a local aggregate checksum file with:
+
+```bash
+make checksums VERSION=0.1.2
+```
 
 ## Management API
 
