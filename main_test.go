@@ -95,7 +95,6 @@ func TestSendInviteUsesConfiguredProxy(t *testing.T) {
 	result, err := sendInvite(ctx,
 		pluginConfig{
 			BaseURL:    "http://chatgpt.example",
-			ProxyURL:   proxy.URL,
 			Language:   "zh-CN",
 			Originator: "Codex Desktop",
 			UserAgent:  "test-agent",
@@ -105,6 +104,7 @@ func TestSendInviteUsesConfiguredProxy(t *testing.T) {
 		[]string{"user@example.com"},
 		"ref-key",
 		"",
+		proxy.URL,
 	)
 	if err != nil {
 		t.Fatalf("sendInvite() error = %v", err)
@@ -133,6 +133,16 @@ func TestSendInviteUsesConfiguredProxy(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("proxy did not receive invite request")
+	}
+}
+
+func TestRenderInvitePageDoesNotPersistProxyURL(t *testing.T) {
+	page := renderInvitePage(defaultConfig())
+	if !strings.Contains(page, `proxy_url: field('proxyUrl').value.trim()`) {
+		t.Fatalf("page does not send proxy URL from the form")
+	}
+	if strings.Contains(page, `proxyURL`) {
+		t.Fatalf("page contains persistent proxyURL storage/default wiring")
 	}
 }
 

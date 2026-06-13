@@ -76,7 +76,7 @@ const (
 	upstreamBodyLimit       int64 = 1 << 20
 )
 
-var pluginVersion = "0.1.2"
+var pluginVersion = "0.1.3"
 
 var (
 	activeConfig atomic.Value
@@ -127,7 +127,6 @@ type managementRequest struct {
 type pluginConfig struct {
 	ReferralKey         string `yaml:"referral_key"`
 	BaseURL             string `yaml:"base_url"`
-	ProxyURL            string `yaml:"proxy_url"`
 	Language            string `yaml:"language"`
 	Originator          string `yaml:"originator"`
 	UserAgent           string `yaml:"user_agent"`
@@ -302,9 +301,6 @@ func mergeConfig(base, override pluginConfig) pluginConfig {
 	if strings.TrimSpace(override.BaseURL) != "" {
 		base.BaseURL = override.BaseURL
 	}
-	if strings.TrimSpace(override.ProxyURL) != "" {
-		base.ProxyURL = override.ProxyURL
-	}
 	if strings.TrimSpace(override.Language) != "" {
 		base.Language = override.Language
 	}
@@ -332,7 +328,6 @@ func normalizeConfig(cfg pluginConfig) pluginConfig {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = defaultBaseURL
 	}
-	cfg.ProxyURL = strings.TrimSpace(cfg.ProxyURL)
 	cfg.Language = strings.TrimSpace(cfg.Language)
 	if cfg.Language == "" {
 		cfg.Language = defaultLanguage
@@ -419,7 +414,6 @@ func handleInvite(req pluginapi.ManagementRequest) pluginapi.ManagementResponse 
 	cfg := currentConfig()
 	requestCfg := mergeConfig(cfg, pluginConfig{
 		BaseURL:    payload.BaseURL,
-		ProxyURL:   payload.ProxyURL,
 		Language:   payload.Language,
 		Originator: payload.Originator,
 		UserAgent:  payload.UserAgent,
@@ -462,7 +456,7 @@ func handleInvite(req pluginapi.ManagementRequest) pluginapi.ManagementResponse 
 
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
-	result, errSend := sendInvite(ctx, requestCfg, credential, account, emails, referralKey, strings.TrimSpace(payload.Cookie))
+	result, errSend := sendInvite(ctx, requestCfg, credential, account, emails, referralKey, strings.TrimSpace(payload.Cookie), strings.TrimSpace(payload.ProxyURL))
 	if errSend != nil {
 		return jsonResponse(statusForError(errSend), map[string]any{"error": errSend.Error()})
 	}
@@ -729,7 +723,7 @@ func parseCodexCredential(raw []byte) (codexCredential, error) {
 	}, nil
 }
 
-func sendInvite(ctx context.Context, cfg pluginConfig, credential codexCredential, account accountInfo, emails []string, referralKey string, requestCookie string) (inviteResponse, error) {
+func sendInvite(ctx context.Context, cfg pluginConfig, credential codexCredential, account accountInfo, emails []string, referralKey string, requestCookie string, proxyURL string) (inviteResponse, error) {
 	endpoint, errEndpoint := inviteEndpoint(cfg.BaseURL)
 	if errEndpoint != nil {
 		return inviteResponse{}, errEndpoint
@@ -761,7 +755,7 @@ func sendInvite(ctx context.Context, cfg pluginConfig, credential codexCredentia
 		req.Header.Set("Cookie", cfg.Cookie)
 	}
 
-	client, errClient := inviteHTTPClient(cfg.ProxyURL)
+	client, errClient := inviteHTTPClient(proxyURL)
 	if errClient != nil {
 		return inviteResponse{}, errClient
 	}
@@ -968,7 +962,6 @@ func renderInvitePage(cfg pluginConfig) string {
 	defaults := map[string]any{
 		"referralKey": cfg.ReferralKey,
 		"baseURL":     cfg.BaseURL,
-		"proxyURL":    cfg.ProxyURL,
 		"language":    cfg.Language,
 		"originator":  cfg.Originator,
 		"userAgent":   cfg.UserAgent,
@@ -976,7 +969,7 @@ func renderInvitePage(cfg pluginConfig) string {
 	}
 	rawDefaults, errMarshal := json.Marshal(defaults)
 	if errMarshal != nil {
-		rawDefaults = []byte(`{"referralKey":"codex_referral_persistent_invite","baseURL":"https://chatgpt.com","proxyURL":"","language":"zh-CN","originator":"Codex Desktop","userAgent":"","maxEmails":10}`)
+		rawDefaults = []byte(`{"referralKey":"codex_referral_persistent_invite","baseURL":"https://chatgpt.com","language":"zh-CN","originator":"Codex Desktop","userAgent":"","maxEmails":10}`)
 	}
 	return `<!doctype html>
 <html lang="en">
@@ -1433,7 +1426,6 @@ func renderInvitePage(cfg pluginConfig) string {
       return {
         referralKey: settings.referral_key,
         baseURL: settings.base_url,
-        proxyURL: settings.proxy_url,
         language: settings.language,
         originator: settings.originator,
         userAgent: settings.user_agent,
@@ -1445,7 +1437,7 @@ func renderInvitePage(cfg pluginConfig) string {
       const data = raw || {};
       field('referralKey').value = data.referral_key || data.referralKey || DEFAULTS.referralKey || '';
       field('baseUrl').value = data.base_url || data.baseURL || DEFAULTS.baseURL || 'https://chatgpt.com';
-      field('proxyUrl').value = data.proxy_url || data.proxyURL || DEFAULTS.proxyURL || '';
+      field('proxyUrl').value = '';
       field('language').value = data.language || DEFAULTS.language || 'zh-CN';
       field('originator').value = data.originator || DEFAULTS.originator || 'Codex Desktop';
       field('userAgent').value = data.user_agent || data.userAgent || DEFAULTS.userAgent || '';
