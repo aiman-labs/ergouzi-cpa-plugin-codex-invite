@@ -56,7 +56,7 @@ import (
 
 const (
 	pluginID                      = "codex-invite"
-	pluginVersion                 = "0.1.0"
+	pluginVersion                 = "0.1.1"
 	defaultReferralKey            = "codex_referral_persistent_invite"
 	defaultBaseURL                = "https://chatgpt.com"
 	defaultLanguage               = "zh-CN"
