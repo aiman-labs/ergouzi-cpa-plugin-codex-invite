@@ -15,7 +15,8 @@ POST https://chatgpt.com/backend-api/wham/referrals/invite
 ## Configuration
 
 The plugin does not expose invite fields in the Management Center plugin
-configuration form. Plugin config is only used to enable the plugin:
+configuration form. Plugin config is used to enable the plugin and can
+optionally pin the internal CPA Management API origin:
 
 ```yaml
 plugins:
@@ -24,7 +25,22 @@ plugins:
     codex-invite:
       enabled: true
       priority: 1
+      # Optional. Recommended when CPA is behind Cloudflare Access, a reverse
+      # proxy, or a tunnel and the plugin should call the local CPA service
+      # instead of looping back through the public management hostname.
+      management_origin: http://127.0.0.1:8317
 ```
+
+When `management_origin` is set, the plugin uses that server-side value before
+any browser-provided origin. This avoids server-to-public-host loops such as:
+
+```text
+CPA container -> https://cpa.example.com -> Cloudflare Access -> CPA container
+```
+
+Without this setting, the resource page falls back to the current page origin,
+which is suitable only when the CPA server can reach that origin without extra
+browser-only authentication.
 
 ## Resource Page
 

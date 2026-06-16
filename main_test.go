@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginabi"
+	"github.com/router-for-me/CLIProxyAPI/v7/sdk/pluginapi"
 )
 
 func TestCollectEmailsSplitsDedupesAndValidates(t *testing.T) {
@@ -44,6 +45,35 @@ func TestNormalizeOrigin(t *testing.T) {
 	}
 	if got != "https://127.0.0.1:8317" {
 		t.Fatalf("origin = %q, want https://127.0.0.1:8317", got)
+	}
+}
+
+func TestResolveManagementOriginPrefersConfiguredInternalOrigin(t *testing.T) {
+	req := pluginapi.ManagementRequest{Headers: http.Header{}}
+	req.Headers.Set(requestManagementOrigin, "https://cpa.example.com")
+	req.Headers.Set("Origin", "https://origin.example.com")
+
+	got, err := resolveManagementOrigin(req, "https://payload.example.com", pluginConfig{
+		ManagementOrigin: "http://127.0.0.1:8317/",
+	})
+	if err != nil {
+		t.Fatalf("resolveManagementOrigin() error = %v", err)
+	}
+	if got != "http://127.0.0.1:8317" {
+		t.Fatalf("origin = %q, want configured internal origin", got)
+	}
+}
+
+func TestResolveManagementOriginFallsBackToRequestOrigin(t *testing.T) {
+	req := pluginapi.ManagementRequest{Headers: http.Header{}}
+	req.Headers.Set(requestManagementOrigin, "https://cpa.example.com/management.html")
+
+	got, err := resolveManagementOrigin(req, "", pluginConfig{})
+	if err != nil {
+		t.Fatalf("resolveManagementOrigin() error = %v", err)
+	}
+	if got != "https://cpa.example.com" {
+		t.Fatalf("origin = %q, want request header origin", got)
 	}
 }
 

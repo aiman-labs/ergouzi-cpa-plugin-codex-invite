@@ -76,7 +76,7 @@ const (
 	upstreamBodyLimit       int64 = 1 << 20
 )
 
-var pluginVersion = "0.1.4"
+var pluginVersion = "0.1.4-ergouzi.1"
 
 var (
 	activeConfig atomic.Value
@@ -127,6 +127,7 @@ type managementRequest struct {
 type pluginConfig struct {
 	ReferralKey         string `yaml:"referral_key"`
 	BaseURL             string `yaml:"base_url"`
+	ManagementOrigin    string `yaml:"management_origin"`
 	Language            string `yaml:"language"`
 	Originator          string `yaml:"originator"`
 	UserAgent           string `yaml:"user_agent"`
@@ -301,6 +302,9 @@ func mergeConfig(base, override pluginConfig) pluginConfig {
 	if strings.TrimSpace(override.BaseURL) != "" {
 		base.BaseURL = override.BaseURL
 	}
+	if strings.TrimSpace(override.ManagementOrigin) != "" {
+		base.ManagementOrigin = override.ManagementOrigin
+	}
 	if strings.TrimSpace(override.Language) != "" {
 		base.Language = override.Language
 	}
@@ -328,6 +332,7 @@ func normalizeConfig(cfg pluginConfig) pluginConfig {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = defaultBaseURL
 	}
+	cfg.ManagementOrigin = strings.TrimRight(strings.TrimSpace(cfg.ManagementOrigin), "/")
 	cfg.Language = strings.TrimSpace(cfg.Language)
 	if cfg.Language == "" {
 		cfg.Language = defaultLanguage
@@ -364,8 +369,8 @@ func pluginRegistration() registration {
 		Metadata: pluginapi.Metadata{
 			Name:             "Codex Invite",
 			Version:          pluginVersion,
-			Author:           "router-for-me",
-			GitHubRepository: "https://github.com/router-for-me/cpa-plugin-codex-invite",
+			Author:           "aiman-labs",
+			GitHubRepository: "https://github.com/aiman-labs/ergouzi-cpa-plugin-codex-invite",
 		},
 		Capabilities: registrationCapabilities{ManagementAPI: true},
 	}
@@ -395,7 +400,7 @@ func handleManagement(raw []byte) ([]byte, error) {
 }
 
 func handleAccounts(req pluginapi.ManagementRequest) pluginapi.ManagementResponse {
-	accounts, errAccounts := fetchCodexAccounts(req, "")
+	accounts, errAccounts := fetchCodexAccounts(req, "", currentConfig())
 	if errAccounts != nil {
 		return jsonResponse(statusForError(errAccounts), map[string]any{"error": errAccounts.Error()})
 	}
@@ -429,7 +434,7 @@ func handleInvite(req pluginapi.ManagementRequest) pluginapi.ManagementResponse 
 		return jsonResponse(http.StatusBadRequest, map[string]any{"error": errEmails.Error()})
 	}
 
-	accounts, errAccounts := fetchCodexAccounts(req, payload.ManagementOrigin)
+	accounts, errAccounts := fetchCodexAccounts(req, payload.ManagementOrigin, cfg)
 	if errAccounts != nil {
 		return jsonResponse(statusForError(errAccounts), map[string]any{"error": errAccounts.Error()})
 	}
@@ -438,7 +443,7 @@ func handleInvite(req pluginapi.ManagementRequest) pluginapi.ManagementResponse 
 		return jsonResponse(http.StatusBadRequest, map[string]any{"error": errAccount.Error()})
 	}
 
-	credential, errCredential := fetchCodexCredential(req, payload.ManagementOrigin, account)
+	credential, errCredential := fetchCodexCredential(req, payload.ManagementOrigin, cfg, account)
 	if errCredential != nil {
 		return jsonResponse(statusForError(errCredential), map[string]any{"error": errCredential.Error()})
 	}
@@ -549,8 +554,8 @@ func selectAccount(accounts []accountInfo, req inviteRequest) (accountInfo, erro
 	return accountInfo{}, fmt.Errorf("selected Codex credential was not found")
 }
 
-func fetchCodexAccounts(req pluginapi.ManagementRequest, explicitOrigin string) ([]accountInfo, error) {
-	origin, errOrigin := resolveManagementOrigin(req, explicitOrigin)
+func fetchCodexAccounts(req pluginapi.ManagementRequest, explicitOrigin string, cfg pluginConfig) ([]accountInfo, error) {
+	origin, errOrigin := resolveManagementOrigin(req, explicitOrigin, cfg)
 	if errOrigin != nil {
 		return nil, errOrigin
 	}
@@ -608,8 +613,8 @@ func fetchCodexAccounts(req pluginapi.ManagementRequest, explicitOrigin string) 
 	return accounts, nil
 }
 
-func fetchCodexCredential(req pluginapi.ManagementRequest, explicitOrigin string, account accountInfo) (codexCredential, error) {
-	origin, errOrigin := resolveManagementOrigin(req, explicitOrigin)
+func fetchCodexCredential(req pluginapi.ManagementRequest, explicitOrigin string, cfg pluginConfig, account accountInfo) (codexCredential, error) {
+	origin, errOrigin := resolveManagementOrigin(req, explicitOrigin, cfg)
 	if errOrigin != nil {
 		return codexCredential{}, errOrigin
 	}
@@ -639,8 +644,9 @@ func fetchCodexCredential(req pluginapi.ManagementRequest, explicitOrigin string
 	return credential, nil
 }
 
-func resolveManagementOrigin(req pluginapi.ManagementRequest, explicit string) (string, error) {
+func resolveManagementOrigin(req pluginapi.ManagementRequest, explicit string, cfg pluginConfig) (string, error) {
 	for _, candidate := range []string{
+		cfg.ManagementOrigin,
 		explicit,
 		req.Headers.Get(requestManagementOrigin),
 		req.Headers.Get("Origin"),
