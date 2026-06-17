@@ -1,5 +1,5 @@
 PLUGIN_NAME ?= codex-invite
-VERSION ?= 0.1.4-ergouzi.2
+VERSION ?= 0.1.4-ergouzi.3
 BUILD_DIR ?= dist
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
