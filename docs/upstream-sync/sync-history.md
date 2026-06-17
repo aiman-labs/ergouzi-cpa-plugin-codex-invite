@@ -79,3 +79,32 @@ Result:
   `codex-invite.so`.
 - Package sha256:
   `733c18a0485416dae32783f2382d54ccc06a14a84bba61545ae35cc45ed41a41`.
+
+## 2026-06-17 CPA `v7.2.13` SDK Compatibility Rebuild
+
+| Item | Value |
+|---|---|
+| Ergouzi plugin target | `v0.1.4-ergouzi.3` |
+| Upstream plugin latest release | `v0.1.4` |
+| Upstream plugin commits pending | `0` |
+| CPA host sync target | `v7.2.13` |
+| CPA SDK dependency | `github.com/router-for-me/CLIProxyAPI/v7 v7.2.13` |
+| Reason | Rebuild plugin against the CPA SDK version used by the pending CPA `v7.2.13` sync. |
+
+Findings:
+
+- Upstream `LTbinglingfeng/cpa-plugin-codex-invite` has no new commits or
+  releases after `v0.1.4`.
+- This is an Ergouzi compatibility rebuild, not an upstream plugin feature sync.
+- The rebuild preserves `management_origin` support and the existing Ergouzi
+  fork metadata.
+
+Verification:
+
+```bash
+go test ./...
+make vet
+make build PLUGIN_OUTPUT=/tmp/codex-invite-v7.2.13.dylib
+git diff --check
+rg -n '^(<<<<<<<|=======|>>>>>>>)' .
+```
