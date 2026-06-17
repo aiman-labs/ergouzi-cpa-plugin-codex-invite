@@ -76,7 +76,7 @@ const (
 	upstreamBodyLimit       int64 = 1 << 20
 )
 
-var pluginVersion = "0.1.4-ergouzi.2"
+var pluginVersion = "0.1.4-ergouzi.3"
 
 var (
 	activeConfig atomic.Value
