@@ -108,3 +108,21 @@ make build PLUGIN_OUTPUT=/tmp/codex-invite-v7.2.13.dylib
 git diff --check
 rg -n '^(<<<<<<<|=======|>>>>>>>)' .
 ```
+
+## 2026-06-18 CPA / CPAMC Deploy Check
+
+| Item | Value |
+|---|---|
+| CPA deployed tag | `v7.2.16-ergouzi.1` |
+| CPAMC deployed tag | `v1.16.11-ergouzi.1` |
+| Upstream plugin latest release | `v0.1.4` |
+| Plugin runtime update | none |
+| Production action | skipped plugin deployment |
+
+Decision:
+
+- The 2026-06-18 production deploy updated CPA and CPAMC only.
+- No Codex Invite plugin runtime code or release asset changed in this round.
+- Skipping plugin deployment was intentional. Rebuild/deploy this plugin only
+  when upstream plugin changes, Ergouzi plugin code changes, or CPA host / SDK
+  compatibility requires a new `.so`.
