@@ -17,6 +17,11 @@ while periodically syncing `LTbinglingfeng/cpa-plugin-codex-invite`.
 ## Rules
 
 - Keep Ergouzi production on our fork, not upstream release assets.
+- Never open pull requests against the upstream repository. All Ergouzi sync PRs
+  must target `aiman-labs/ergouzi-cpa-plugin-codex-invite`; use explicit
+  commands such as
+  `gh pr create -R aiman-labs/ergouzi-cpa-plugin-codex-invite --head aiman-labs:<branch>`
+  instead of relying on GitHub CLI auto-detection.
 - Keep `management_origin` support unless the CPA plugin API later provides a
   safer host callback for local Management API access.
 - Accept upstream invite-flow fixes when they do not reintroduce public-host
