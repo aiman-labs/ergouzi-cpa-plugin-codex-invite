@@ -168,3 +168,42 @@ Result:
 - Local `darwin/arm64` dynamic-library build passed.
 - No plugin source, dependency, package, release, or production deployment
   change was made for this recheck.
+
+## 2026-06-23 CPA `v7.2.31` SDK Compatibility Recheck
+
+| Item | Value |
+|---|---|
+| Ergouzi plugin source | `6e52f43` |
+| Upstream plugin latest release | `v0.1.4` |
+| Upstream plugin commits pending | `0` |
+| CPA host sync target | `v7.2.31` |
+| CPA host branch | `sync/upstream-v7.2.31` |
+| CPA host target commit | `05d1792d` |
+| Reason | Recheck plugin source compatibility against the CPA SDK/runtime changes adopted by the pending CPA `v7.2.31` sync. |
+
+Findings:
+
+- Upstream `LTbinglingfeng/cpa-plugin-codex-invite` still has no new commits or
+  releases after `v0.1.4`.
+- This is a compatibility recheck, not a plugin feature sync and not a release
+  asset rebuild.
+- CPA `v7.2.31` adds public SDK packages for plugin host and plugin store
+  management, but the current Codex Invite plugin does not import those new
+  surfaces and still builds against the synced local CPA module.
+
+Verification:
+
+```bash
+go work init ../ergouzi-cpa-plugin-codex-invite ../ergouzi-CLIProxyAPI
+GOWORK=<temp>/go.work make test
+GOWORK=<temp>/go.work make vet
+GOWORK=<temp>/go.work make build PLUGIN_OUTPUT=/tmp/codex-invite-v7.2.31.dylib
+```
+
+Result:
+
+- `make test` passed.
+- `make vet` passed.
+- Local `darwin/arm64` dynamic-library build passed.
+- No plugin source, dependency, package, release, or production deployment
+  change was made for this recheck.
