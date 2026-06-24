@@ -96,6 +96,30 @@ make package VERSION=0.1.4
 
 ## Plugin Store Release
 
+The Ergouzi CPA plugin store registry for this plugin is published at:
+
+```text
+https://raw.githubusercontent.com/aiman-labs/ergouzi-cpa-plugin-codex-invite/main/registry.json
+```
+
+Add it to CPA `config.yaml` with:
+
+```yaml
+plugins:
+  enabled: true
+  store-sources:
+    - https://raw.githubusercontent.com/aiman-labs/ergouzi-cpa-plugin-codex-invite/main/registry.json
+  configs:
+    codex-invite:
+      enabled: true
+      priority: 1
+      management_origin: http://127.0.0.1:8317
+```
+
+The registry keeps the plugin ID as `codex-invite` so existing CPA plugin
+configuration keys, management routes, and CPAMC resource links do not need a
+migration.
+
 For plugin-store installation, each GitHub release must include:
 
 ```text
