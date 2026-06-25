@@ -17,6 +17,8 @@ while periodically syncing `LTbinglingfeng/cpa-plugin-codex-invite`.
 ## Rules
 
 - Keep Ergouzi production on our fork, not upstream release assets.
+- Keep this fork public. CPA and CPAMC need to fetch the Ergouzi plugin-store
+  registry and GitHub release assets without a GitHub token.
 - Never open pull requests against the upstream repository. All Ergouzi sync PRs
   must target `aiman-labs/ergouzi-cpa-plugin-codex-invite`; use explicit
   commands such as
@@ -34,6 +36,13 @@ while periodically syncing `LTbinglingfeng/cpa-plugin-codex-invite`.
 - Distinguish upstream plugin feature syncs from Ergouzi CPA SDK compatibility
   rebuilds. If upstream plugin has no new release, document the CPA SDK target
   as the reason for the rebuild instead of calling it an upstream feature sync.
+- Formal Ergouzi plugin tags must have GitHub Releases with Linux amd64 zip
+  assets and `checksums.txt`. If the plugin version changes, update
+  `registry.json` on `main` so the plugin-store version matches the release
+  asset version.
+- Keep the plugin ID as `codex-invite` unless there is a deliberate migration
+  plan. CPAMC can show both upstream and Ergouzi sources for the same ID; use
+  source/repository to identify the Ergouzi production entry.
 - Treat automated PR review as advisory. Fix comments that identify a real
   regression in invite flow, CPA plugin ABI compatibility, or code just changed
   by the PR. Do not keep expanding a sync for unrelated surfaces; record those

@@ -120,6 +120,12 @@ The registry keeps the plugin ID as `codex-invite` so existing CPA plugin
 configuration keys, management routes, and CPAMC resource links do not need a
 migration.
 
+Because the official CPA plugin store can also publish an entry with the same
+plugin ID, CPAMC may show both the official source and the Ergouzi source. For
+Ergouzi production, manage the entry whose source is `aiman-labs` /
+`raw.githubusercontent.com`. Do not replace it with the upstream `codex-invite`
+entry unless you intentionally want to leave the Ergouzi fork.
+
 For plugin-store installation, each GitHub release must include:
 
 ```text
@@ -134,6 +140,10 @@ Each zip must contain the dynamic library at the zip root:
 - Windows: `codex-invite.dll`
 
 `checksums.txt` must be in sha256sum format.
+
+When publishing a new Ergouzi plugin release, update `registry.json` on `main`
+so the `version` field matches the GitHub Release asset version. The registry is
+the plugin-store index; the release asset is the install/update payload.
 
 Generate a local aggregate checksum file with:
 
