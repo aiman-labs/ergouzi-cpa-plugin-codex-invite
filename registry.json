@@ -6,7 +6,7 @@
       "name": "Codex Invite",
       "description": "Send Codex referral invite emails from CPA using a selected Codex OAuth credential.",
       "author": "aiman-labs",
-      "version": "0.1.4-ergouzi.1",
+      "version": "0.1.4-ergouzi.3",
       "repository": "https://github.com/aiman-labs/ergouzi-cpa-plugin-codex-invite",
       "homepage": "https://github.com/aiman-labs/ergouzi-cpa-plugin-codex-invite",
       "license": "MIT",
