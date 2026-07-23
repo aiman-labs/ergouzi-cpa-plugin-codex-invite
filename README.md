@@ -75,9 +75,13 @@ On macOS this creates:
 
 ```text
 dist/codex-invite.dylib
-dist/codex-invite_0.1.4_darwin_arm64.zip
-dist/codex-invite_0.1.4_darwin_arm64.zip.sha256
+dist/codex-invite_<version>_darwin_arm64.zip
+dist/codex-invite_<version>_darwin_arm64.zip.sha256
 ```
+
+The default `<version>` comes from the Makefile. For the current published
+plugin-store version, read `registry.json`; do not copy a version from this
+README into a release command.
 
 Install locally by copying the dynamic library to CPA's plugin discovery
 directory, for example:
@@ -91,7 +95,7 @@ Target platform, output directory, and runtime plugin version can be overridden:
 
 ```bash
 make build GOOS=darwin GOARCH=arm64 BUILD_DIR=/path/to/plugins/darwin/arm64
-make package VERSION=0.1.4
+make package VERSION=<version>
 ```
 
 ## Plugin Store Release
@@ -148,7 +152,7 @@ the plugin-store index; the release asset is the install/update payload.
 Generate a local aggregate checksum file with:
 
 ```bash
-make checksums VERSION=0.1.4
+make checksums VERSION=<version>
 ```
 
 ## Management API

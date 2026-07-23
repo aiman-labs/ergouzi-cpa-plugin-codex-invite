@@ -1,5 +1,19 @@
 # Sync History
 
+## 2026-07-22 CPA `v7.2.94` SDK Compatibility Recheck
+
+| Item | Value |
+|---|---|
+| Ergouzi plugin source | `bf7344b` |
+| CPA host sync target | `v7.2.94` |
+| Outcome | tests and real C-shared compatibility build passed; no plugin release required |
+| Canonical evidence | [CPA sync history](https://github.com/aiman-labs/ergouzi-CLIProxyAPI/blob/main/docs/upstream-sync/sync-history.md), section `2026-07-22 Upstream v7.2.94 Sync` |
+
+This file owns the plugin compatibility index; detailed host-side commands and
+results remain with the CPA sync that produced them. The recheck found an
+additive `sdk/pluginapi.UsageRecord.Generate` field, unchanged
+`sdk/pluginabi`, and no source/ABI evidence requiring a new plugin asset.
+
 ## 2026-06-16 Fork Mechanism Baseline
 
 | Item | Value |
