@@ -20,7 +20,7 @@ dynamic library consumed by CLIProxyAPI.
 - For upstream synchronization, baseline selection, conflict DEC records, and
   sync PR preparation, use `ergouzi:fork-upstream-sync` first.
 - For plugin release, tag, package asset, CPA plugin deployment, rollback, and
-  production verification, use `ergouzi:cpa-release-manager`.
+  production verification, use `ergouzi:release-manager`.
 - For GitHub PRs that rely on Codex automated review, use
   `ergouzi:github-pr-review-loop`. Treat `👀` as review in progress and `👍` or
   "Didn't find any major issues" as the accepted signal for the latest commit.
