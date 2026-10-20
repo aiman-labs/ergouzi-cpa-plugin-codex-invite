@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "repository": "aiman-labs/ergouzi-cpa-plugin-codex-invite",
+  "source_paths": [
+    "main.go",
+    "registry.json",
+    "go.mod",
+    "Makefile"
+  ],
+  "features": [
+    {
+      "id": "INVITE-F001",
+      "title": "Internal management origin and host compatibility",
+      "summary": "Preserve private host-call routing and public plugin identity/assets.",
+      "state": "implemented",
+      "origin": "hybrid",
+      "upstream_strategy": "reconcile",
+      "invariants": [
+        "Use internal management_origin behind browser access gates; do not persist access tokens, management keys or invite secrets.",
+        "Keep codex-invite source/version/archive identity and C ABI/JSON compatibility with the host."
+      ],
+      "paths": [
+        "main.go",
+        "main_test.go",
+        "registry.json",
+        "Makefile",
+        "go.mod"
+      ],
+      "verification": [
+        "make test",
+        "make vet",
+        "Manual: target-platform library packaging and host C ABI/JSON compatibility; source tests do not verify a production binary."
+      ],
+      "docs": [
+        "docs/upstream-sync/conflict-decisions.md"
+      ],
+      "dependencies": [
+        {
+          "repository": "ergouzi-CLIProxyAPI",
+          "feature": "CPA-F002",
+          "contract": "Build against the documented host target; validate C ABI/JSON ownership and protocol separately from Go SDK source consumers."
+        }
+      ]
+    }
+  ]
+}

@@ -52,3 +52,22 @@ target `GOOS` / `GOARCH` before treating a build artifact as release-ready.
   explicitly asks to publish a release artifact.
 - Before committing, show the exact staged file scope.
 - Do not add AI signatures, generated-by footers, or AI co-author trailers.
+
+## Feature Development and Protection
+
+- Use `ergouzi:feature-workflow` for new capabilities, changed business rules and
+  feature provenance. Read `docs/features/README.md` and `registry.json` first.
+- New behavior uses `feature/<topic>` and updates an affected stable feature
+  record with invariants, focused source paths, regression entrypoints, upstream
+  strategy and cross-repository contracts. Bounded fixes can use `fix/<topic>`
+  and reuse the record; do not label inherited upstream behavior as downstream.
+- Before a PR, run the read-only `.github/scripts/feature-contract.mjs` check
+  against the intended base and fill this repository's PR template. Pure docs
+  changes need no new feature ID. Checks do not replace semantic review/tests.
+- Upstream synchronization uses an authorized `sync/upstream-<version>` branch
+  from verified product main; never develop or integrate directly on main.
+  Analyze the explicit upstream baseline-to-tag delta against the registry,
+  then update DEC/matrix/history with actual results and limitations.
+- Feature records describe code; release and deployment remain separate facts.
+  This routing grants no branch/worktree creation, commit, push, PR, merge,
+  release, deployment or production permission.
