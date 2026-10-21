@@ -1,73 +1,70 @@
-# AGENTS.md — Ergouzi CPA Codex Invite Plugin
+# AGENTS.md — Ergouzi Codex Invite Plugin
 
-This repository is the Ergouzi fork of the CPA Codex Invite plugin. It builds a
-dynamic library consumed by CLIProxyAPI.
+Fork: `aiman-labs/ergouzi-cpa-plugin-codex-invite`; upstream:
+`LTbinglingfeng/cpa-plugin-codex-invite`. Builds the `codex-invite` dynamic-library archive consumed
+by `ergouzi-CLIProxyAPI`.
 
-## Repository Role
+## Workflow
 
-- Upstream: `LTbinglingfeng/cpa-plugin-codex-invite`
-- Ergouzi fork: `aiman-labs/ergouzi-cpa-plugin-codex-invite`
-- Runtime host: `ergouzi-CLIProxyAPI`
-- Release artifact: platform plugin archive containing `codex-invite` dynamic
-  library
+| Task | Skill, when available |
+|---|---|
+| Refresh workspace context | `ergouzi:workspace-context-refresh` |
+| Upstream sync and baseline decisions | `ergouzi:fork-upstream-sync` |
+| Release, deploy, rollback and receipts | `ergouzi:release-manager` |
 
-## Ergouzi Workflow Skills
+For authorized Codex PR work, use `ergouzi:github-pr-review-loop` when available. Close only after
+latest-head review completes and triage leaves no confirmed P0/P1; do not chase an emoji. There is
+no fixed round cap: continue with substantive progress, stop and hand off
+repetition/oscillation/stalls, and keep unresolved confirmed P0/P1 blocking.
 
-- When the user says `刷新 Ergouzi 工作上下文`,
-  `同步二狗工作流上下文`, `Ergouzi context refresh`, or asks a thread to
-  catch up with recent Ergouzi repo/workflow changes, use
-  `ergouzi:workspace-context-refresh` before continuing.
-- For upstream synchronization, baseline selection, conflict DEC records, and
-  sync PR preparation, use `ergouzi:fork-upstream-sync` first.
-- For plugin release, tag, package asset, CPA plugin deployment, rollback, and
-  production verification, use `ergouzi:release-manager`.
-- For GitHub PRs that rely on Codex automated review, use
-  `ergouzi:github-pr-review-loop`. Treat `👀` as review in progress and `👍` or
-  "Didn't find any major issues" as the accepted signal for the latest commit.
-- Ergouzi plugin releases use upstream release/tag baselines with
-  `vX.Y.Z-ergouzi.N` tags when an upstream version exists. If upstream has no
-  release/tag, record the upstream commit baseline in `docs/upstream-sync/`.
+- Release tags use `vX.Y.Z-ergouzi.N` from upstream releases/tags; record the upstream commit in
+  `docs/upstream-sync/` when no release/tag exists.
+- Code checks: `make test`, `make vet`, `make build`; `make package` creates release artifacts. CGO
+  and target `GOOS`/`GOARCH` must match the host before declaring an artifact release-ready.
+  Docs-only changes need content/link/diff checks.
 
-## Commands
+## Boundaries
 
-```bash
-make test
-make vet
-make build
-make package
-```
+- Simplified Chinese responses; English code/comments.
+- Server calls use the internal CPA Management API when browser-only gates such as Cloudflare Access
+  protect production.
+- Do not persist ChatGPT tokens, management keys, proxy URLs, cookies or invite secrets. Do not
+  commit archives/checksums/build outputs without explicit artifact-publication scope.
 
-The plugin uses CGO and platform-specific dynamic-library outputs. Verify the
-target `GOOS` / `GOARCH` before treating a build artifact as release-ready.
+## Authorization
 
-## Working Rules
-
-- Default response language is Simplified Chinese; code and comments use
-  English.
-- Keep server-side calls on the internal CPA Management API path when
-  production is behind Cloudflare Access or another browser-only gate.
-- Do not persist ChatGPT access tokens, CPA management keys, proxy URLs,
-  cookies, or invite secrets.
-- Do not commit release archives, checksums, or build outputs unless the user
-  explicitly asks to publish a release artifact.
-- Before committing, show the exact staged file scope.
-- Do not add AI signatures, generated-by footers, or AI co-author trailers.
+- Preserve unrelated changes. Branch/worktree creation and commits each require explicit user
+  authorization; push, PRs, comments, merge, release and deployment require their own scoped
+  authorization.
+- Show the exact file scope before committing. Do not add AI signatures, generated-by markers or AI
+  co-author trailers; do not rewrite history without explicit authorization.
 
 ## Feature Development and Protection
 
-- Use `ergouzi:feature-workflow` for new capabilities, changed business rules and
-  feature provenance. Read `docs/features/README.md` and `registry.json` first.
-- New behavior uses `feature/<topic>` and updates an affected stable feature
-  record with invariants, focused source paths, regression entrypoints, upstream
-  strategy and cross-repository contracts. Bounded fixes can use `fix/<topic>`
-  and reuse the record; do not label inherited upstream behavior as downstream.
-- Before a PR, run the read-only `.github/scripts/feature-contract.mjs` check
-  against the intended base and fill this repository's PR template. Pure docs
-  changes need no new feature ID. Checks do not replace semantic review/tests.
-- Upstream synchronization uses an authorized `sync/upstream-<version>` branch
-  from verified product main; never develop or integrate directly on main.
-  Analyze the explicit upstream baseline-to-tag delta against the registry,
-  then update DEC/matrix/history with actual results and limitations.
-- Feature records describe code; release and deployment remain separate facts.
-  This routing grants no branch/worktree creation, commit, push, PR, merge,
-  release, deployment or production permission.
+- For feature work, use `ergouzi:feature-workflow` when available; read `docs/features/README.md`
+  and `docs/features/registry.json`.
+- New behavior uses an authorized `feature/<topic>` branch; bounded regressions may use
+  `fix/<topic>` and reuse the feature ID. Update affected records with invariants, focused paths,
+  regression entrypoints, upstream provenance/strategy and cross-repository contracts. Inherited
+  upstream behavior is not original downstream work.
+- Before a PR, read `.github/PULL_REQUEST_TEMPLATE.md` and run
+  `node .github/scripts/feature-contract.mjs --repo . --base <intended-base>`. Pure docs changes
+  need no new feature ID; the checker does not replace semantic review or tests.
+- Sync uses an authorized `sync/upstream-<version>` from verified product main, never direct
+  integration on main. Read `docs/upstream-sync/{README.md,conflict-decisions.md,sync-history.md}`
+  and any protection matrix; analyze the explicit upstream baseline-to-target delta against the
+  registry, then update DEC/matrix/history with actual results and limitations.
+- Feature implementation, release and deployment are separate facts. This guidance grants no Git,
+  GitHub, release or production permissions.
+
+## Code Review Rules
+
+- Report only high-confidence P0/P1 defects introduced or materially worsened by this PR: critical
+  outages or serious reachable correctness, security, billing, data-integrity or production
+  regressions.
+- Identify the concrete trigger, affected code path and serious consequence, supported by code,
+  focused tests or runtime evidence. Do not invent environmental assumptions; an executable exploit
+  is unnecessary when the code proves the failure.
+- Exclude P2/P3, style, routine refactors, speculative hardening, unrelated old defects, and missing
+  tests/docs or convention violations alone. Return no findings when nothing meets the threshold.
+- Required CI, tests, human approvals and merge authorization remain separate requirements.
